@@ -1,0 +1,66 @@
+public with sharing class fetchRecordIdClass {
+    @AuraEnabled(cacheable = true)  
+    public static List<DataSet> getCodeSnippetList(String searchString) { 
+        List<List<ContentDocumentLink>> newAttachmentList = new List<List<ContentDocumentLink>>();
+        List<DataSet> newDataWrapper = new List<DataSet>();
+        String queryCode = 'SELECT Name, File_Type__c, IsApproved__c, (SELECT ContentDocumentId, LinkedEntityId, ContentDocument.Title, ContentDocument.ContentSize FROM ContentDocumentLinks) FROM Code_Snippet__c where IsApproved__c = true '; 
+        if (searchString != null && searchString != ''){ 
+            System.debug('Not Null');
+            queryCode += ' AND  Name like \'%' + String.escapeSingleQuotes(searchString) + '%\' '; 
+        } 
+        List<Code_Snippet__c> queryCodeSnippet = Database.query(queryCode);
+        System.debug('queryCodeSnippet'+queryCodeSnippet);
+        System.debug('queryCodeSnippet Size'+queryCodeSnippet.size());
+        for(Code_Snippet__c cs:queryCodeSnippet){
+            System.debug('cs.Attachments.size()'+cs.Attachments.size());
+            if(cs.ContentDocumentLinks.size()>0){
+                System.debug('Size is not 0');
+                newAttachmentList.add(cs.ContentDocumentLinks);
+            }
+        }
+        System.debug('newAttachmentList'+newAttachmentList);
+        System.debug('newAttachmentList Size'+newAttachmentList.size());
+        List<ContentDocumentLink> newCDList = new List<ContentDocumentLink>();
+        for(List<ContentDocumentLink> cdl:newAttachmentList){
+            for(integer varIter=0 ;varIter< cdl.size();varIter++){
+                newCDList.add(cdl[varIter]);
+                System.debug('cdl[varIter]'+cdl[varIter]);
+            }
+        }
+        System.debug('newCDList'+newCDList);
+        System.debug('newCDList Size'+newCDList.size());
+        System.debug('newCDList'+newCDList[0].ContentDocument.Title);
+        Integer iter =0;
+        for(ContentDocumentLink cd:newCDList){
+            for(Code_Snippet__c cs:queryCodeSnippet){
+                if(cd.LinkedEntityId == cs.Id){
+                    //System.debug('Enter'+iter);
+                    DataSet newData = new DataSet(cs.Id,cd.ContentDocumentId,cs.Name,cd.ContentDocument.Title,cs.File_Type__c);
+                    newDataWrapper.add(newData);
+                }
+            }
+        }  
+        System.debug('newDataWrapper'+newDataWrapper);
+        System.debug('newDataWrapper Size'+newDataWrapper.size());
+        return newDataWrapper;
+    }
+    public class DataSet{
+        public DataSet(Id parId ,Id AttachmentId, String Name, String AttachmentName, String FileType){
+            this.parId  = parId ; 
+            this.AttachmentId = '/contentdocument/'+AttachmentId;
+            this.Name  = Name ; 
+            this.AttachmentName = AttachmentName ;
+            this.FileType  = FileType ; 
+        }
+        @AuraEnabled
+        public String parId {get;set;}
+        @AuraEnabled
+        public String AttachmentId {get;set;}
+        @AuraEnabled
+        public String Name {get;set;}
+        @AuraEnabled
+        public String AttachmentName {get;set;}
+        @AuraEnabled
+        public String FileType {get;set;}        
+    }
+}
