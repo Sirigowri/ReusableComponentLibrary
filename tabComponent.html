@@ -1,0 +1,102 @@
+<template>
+    <lightning-tabset variant="scoped">
+        <lightning-tab label="Create New File">
+            <lightning-card title="Code Snippet" icon-name="action:new_note">
+                <lightning-record-edit-form object-api-name="Code_Snippet__c" onsuccess={handleSuccess}>
+                    <lightning-messages></lightning-messages>
+                    <div class="slds-m-around_medium">
+                        <lightning-input-field field-name='Name' required></lightning-input-field>
+                        <lightning-input-field field-name='File_Type__c'></lightning-input-field>
+                        <lightning-input-field field-name='Code__c' required></lightning-input-field>
+                        <div class="slds-m-top_medium">
+                            <lightning-button class="slds-m-top_small" label="Cancel" onclick={handleReset}></lightning-button>
+                            &nbsp;&nbsp;
+                            <lightning-button variant="brand" type="submit" name="save" label="Create File"></lightning-button>
+                        </div>
+                    </div>
+                </lightning-record-edit-form>
+            </lightning-card> 
+        </lightning-tab>
+        <lightning-tab label="Upload Files">
+            <lightning-card title="Upload Files" icon-name="custom:custom19">
+                <lightning-record-edit-form object-api-name="Code_Snippet__c" onsuccess={handleUpload}>
+                    <lightning-messages></lightning-messages>
+                    <div class="slds-m-around_medium">
+                        <lightning-input-field field-name='Name' required></lightning-input-field>
+                        <lightning-input-field field-name='File_Type__c'></lightning-input-field>
+                        <div class="slds-m-top_medium">
+                            <template if:false={showButtons}>
+                                <lightning-button class="slds-m-top_small" label="Cancel" onclick={handleReset}></lightning-button>
+                                &nbsp;&nbsp;
+                                <lightning-button variant="brand" type="submit" name="save" label="Upload File"></lightning-button>
+                            </template>
+                        </div> 
+                    </div>
+                </lightning-record-edit-form> 
+                <template if:true={codeId}>     
+                    <div class="slds-p-around_medium lgc-bg">
+                        <div class="demo-only" style="max-width:320px">
+                            <div class="slds-form-element">
+                                <span class="slds-form-element__label" id="file-selector-primary-label"></span>
+                                <div class="slds-form-element__control">
+                                    <div class="slds-file-selector slds-file-selector_images">
+                                        <div class="slds-file-selector__dropzone slds-has-drag-over">
+                                            <lightning-file-upload name="fileUploader" accept={acceptedFormats} record-id={codeId}
+                                                onuploadfinished={handleUploadFinished} multiple>
+                                            </lightning-file-upload>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <br />
+                        <lightning-button variant="brand" name="Finish" label="Finish" onclick={handleFinish}></lightning-button>
+                    </div>
+                </template>
+            </lightning-card>
+        </lightning-tab>
+        <lightning-tab label="Find Files">
+            <lightning-card title="Search Code Snippet" icon-name="utility:search">
+                <lightning-layout multiple-rows="true" vertical-align="center">
+                    <lightning-layout-item size="12" 
+                            small-device-size="8" 
+                            medium-device-size="10" 
+                            large-device-size="12" 
+                            padding="around-small">
+                        <lightning-input 
+                                type="search" 
+                                value={strSearchCodeName} 
+                                onchange={handleEmployeeName} 
+                                placeholder="Search Code">
+                    </lightning-input>
+                    </lightning-layout-item>
+                </lightning-layout>        
+                <!--Datatable Component-->
+                <div class="slds-table">
+                    <lightning-datatable 
+                                key-field="Id" 
+                                data={data} 
+                                columns={columns}>
+                    </lightning-datatable>
+                </div>
+        
+                <div class="slds-m-around_medium">
+                    <!--calling of child paginator component-->
+                    <c-paginator 
+                        onprevious={previousHandler} 
+                        onnext={nextHandler}>
+                    </c-paginator>
+        
+                    <center>
+                        <p class="slds-m-vertical_medium content">
+                                Displaying {startingRecord} to 
+                                        {endingRecord} of 
+                                        {totalRecountCount} records.
+                                Page {page} of {totalPage}.
+                        </p>
+                    </center>
+                </div>
+            </lightning-card>    
+        </lightning-tab>
+    </lightning-tabset>
+</template>
