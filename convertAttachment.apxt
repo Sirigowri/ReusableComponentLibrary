@@ -1,0 +1,43 @@
+trigger convertAttachment on Code_Snippet__c (after update){
+    list<Attachment>lstAttachment=new list<Attachment>();
+    for(Code_Snippet__c codeSnip: trigger.new){
+        if(codeSnip.Code__c!=null && codeSnip.IsApproved__c==true ){
+            Attachment fileConv = new Attachment();
+            fileConv.ParentId =codeSnip.id;
+            fileConv.Name = codeSnip.Name + Date.Today();
+            fileConv.ContentType = 'text/plain';
+            fileConv.Body = Blob.valueOf(codeSnip.Code__c);
+            lstAttachment.add(fileConv);
+            
+        }
+    }
+    if(!lstAttachment.isempty())
+    {
+        database.insert(lstAttachment,false);
+    }
+    for(Attachment codeSnip: lstAttachment){
+        system.debug('codeSnip'+codeSnip);
+        system.debug('codeSnip ownerid'+codeSnip.OwnerId);
+        system.debug('codeSnip parentid'+codeSnip.Parentid);
+        ContentVersion cVersion = new ContentVersion();
+        cVersion.ContentLocation = 'S'; 
+        cVersion.PathOnClient = codeSnip.Name;
+        cVersion.Origin = 'C';
+        // cVersion.OwnerId = codeSnip.Parentid;
+        
+        cVersion.Title = codeSnip.Name;
+        cVersion.VersionData = CodeSnip.Body;
+        Insert cVersion; 
+        Id conDocument = [SELECT ContentDocumentId FROM ContentVersion WHERE Id =:cVersion.Id].ContentDocumentId;
+        
+        //Insert ContentDocumentLink
+        ContentDocumentLink cDocLink = new ContentDocumentLink();
+        cDocLink.ContentDocumentId = conDocument;
+        cDocLink.LinkedEntityId = codeSnip.ParentId;
+        cDocLink.ShareType = 'V';
+        cDocLink.Visibility = 'AllUsers';
+        Insert cDocLink;
+    }
+    
+    
+}
